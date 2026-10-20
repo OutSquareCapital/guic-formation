@@ -2,9 +2,11 @@
 
 The following instructions will help you setup the project on your local machine.
 
-The **simple setup** is the easiest way if you are already familiar with git and python, and assume `UV` is already installed on your machine.
+The **simple setup** is easier and the **recommended** way, but may be more obscure if you are not already familiar with git and python.
 
-The **manual setup** is more verbose, but more suited for beginners.
+The **manual setup** explain how to do it manually with more explanations, but require more steps.
+
+Both require you to have `UV` installed on your machine. If you don't have it yet, please follow the instructions [here](https://docs.astral.sh/uv/getting-started/installation/).
 
 ## Simple setup
 
