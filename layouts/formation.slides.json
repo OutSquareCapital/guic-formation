@@ -10,8 +10,15 @@
       {
         "showCode": false
       },
+      {},
       {
         "type": "slide",
+        "showCode": true
+      },
+      {
+        "showCode": false
+      },
+      {
         "showCode": true
       },
       {
@@ -30,6 +37,19 @@
       {},
       {},
       {},
+      {
+        "showCode": true
+      },
+      {},
+      {},
+      {
+        "showCode": true
+      },
+      {},
+      {},
+      {
+        "showCode": true
+      },
       {
         "showCode": true
       },

@@ -89,52 +89,90 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    # Getting the data
+    # Define the problem
 
-    So, you want to get the data for your portfolio, which is 100% in `SPY`.
+    So, you want to get the data for your portfolio, which is 100% in `SPY`, compute the volatility targeting strategy, and visualize/analyze the results.
 
-    In the first place, we'll download it, save it to disk, then check the first row to confirm everything is good.
+    First, we want to:
+
+    - download the data
+    - save it
+    - maybe clean it to our wanted format
+    - save it again to a definitive file
+    - check that everything is good.
+
+    We'll use the `parquet` file format. Think of it as a **much** better `CSV` file.
 
     It can be done in a few lines of code.
-
-    - `yfinance` will let us download the data from Yahoo Finance
-    - `polars` will let us manipulate said data, save it and read it.
-    - `pathlib.Path` simply represent file paths, e.g `users/my_folder/my_file.txt`
-
-    We'll save the data in `parquet` format. Think of it as a **much** better `CSV` file.
     """)
     return
 
 
 @app.cell
 def _():
-    import yfinance as yf
-    import polars as pl
+    mo.md(r"""
+    # We need a ticker
+
+    To use it's name, and link it to concrete files on disk.
+
+    We'll use `pathlib.Path` to represent file paths, e.g `users/my_folder/my_file.txt`
+
+    We first define a structure, a class, to hold those informations together
+    """)
+    return
+
+
+@app.cell
+def _():
     from pathlib import Path
     from dataclasses import dataclass
+    from typing import Self
 
-    PARQUET_EXT = ".parquet"
+    PARQUET = ".parquet"
 
-    @dataclass(init=False, slots=True)
+    @dataclass(slots=True)
     class Ticker:
         name: str
         raw: Path
         clean: Path
 
-        def __init__(self, name: str) -> None:
-            self.name = name
-            self.raw = Path(f"{name}_raw").with_suffix(PARQUET_EXT)
-            self.clean = Path(name).with_suffix(PARQUET_EXT)
+        @classmethod
+        def from_name(cls, name: str) -> Self:
+            raw = Path(f"{name}_raw").with_suffix(PARQUET)
+            clean = Path(name).with_suffix(PARQUET)
+            return cls(name, raw, clean)
 
-    TICKER = Ticker("SPY")
+    SPY = Ticker.from_name("SPY")
+    SPY
+    return SPY, Ticker
 
-    def get_data(self) -> None:
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # Getting the data
+
+    Now that we have your ticker, we define the downloading steps in themselves.
+
+    - `yfinance` will let us download the data from Yahoo Finance
+    - `polars` will let us manipulate said data, save/read it, and do all the computations we need.
+    - `plotly` will help us visualize the results.
+    """)
+    return
+
+
+@app.cell
+def _(SPY, Ticker, self):
+    import yfinance as yf
+    import polars as pl
+
+    def download_ticker(ticker: Ticker) -> None:
         data = yf.download(self.name, period="max")
         pl.from_pandas(data, include_index=True).write_parquet(self.raw)
 
-    # TICKER.get_data()
-    pl.read_parquet(TICKER.raw).head(5)
-    return TICKER, Ticker, pl
+    # download_ticker(SPY)
+    pl.scan_parquet(SPY.raw).head(5).collect()
+    return (pl,)
 
 
 @app.cell
@@ -142,33 +180,26 @@ def _():
     mo.md(r"""
     # Cleaning up data
 
-    Nice, we have our `SPY` prices! But the column names are weird.
+    Nice, we have our `SPY` prices! But as expected, the format isn't what we want:
 
-    We want to rename them.
-
-    Also, we don't need the hour/minute/second part of the date, so we'll remove it.
+    - The column names are weird
+    - We don't need the hour/minute/second part of the date
     """)
     return
 
 
 @app.cell
-def _(TICKER, Ticker, pl):
-    def clean_up_raw_data(ticker: Ticker) -> pl.DataFrame:
-        return (
-            pl
-            .scan_parquet(ticker.raw)
-            .select(
-                pl.col("Date").cast(pl.Date).alias("date"),
-                pl.col("('Open', 'SPY')").alias("open"),
-                pl.col("('High', 'SPY')").alias("high"),
-                pl.col("('Low', 'SPY')").alias("low"),
-                pl.col("('Close', 'SPY')").alias("close"),
-            )
-            .head(5)
-            .collect()
+def _(SPY, Ticker, pl):
+    def clean_raw_data(ticker: Ticker) -> pl.LazyFrame:
+        return pl.scan_parquet(ticker.raw).select(
+            pl.col("Date").cast(pl.Date).alias("date"),
+            pl.col(f"('Open', '{ticker.name}')").alias("open"),
+            pl.col(f"('High', '{ticker.name}')").alias("high"),
+            pl.col(f"('Low', '{ticker.name}')").alias("low"),
+            pl.col(f"('Close', '{ticker.name}')").alias("close"),
         )
 
-    clean_up_raw_data(TICKER)
+    clean_raw_data(SPY).head(5).collect()
     return
 
 
@@ -177,7 +208,7 @@ def _():
     mo.md(r"""
     It works, great!
 
-    We see that there's a common structure for the name, and we know that we will probably download again from yfinance.
+    We see that there's a common structure for the name, and we know that we will probably download again from yfinance, hence always needing to clean immediately afterwards.
 
     So, we extract this logic in a reusable function, and save our cleaned-up data in a new file.
 
@@ -187,35 +218,33 @@ def _():
 
 
 @app.cell
-def _(TICKER, TICKER_CLEAN, TICKER_RAW, pl):
+def _(SPY, Ticker, pl, ticker):
     import plotly.express as px
     from plotly.graph_objects import Figure
 
-    def rename_all(ticker: str) -> str:
+    def run_clean_up(ticker: Ticker) -> None:
+        return (
+            pl.scan_parquet(ticker.raw)
+            .select(rename_all(ticker.name))
+            .sink_parquet(ticker.clean)
+        )
+
+    def rename_all(ticker_name: str) -> str:
         prefix = "('"
         suffix = f"', '{ticker}')"
         return (
             pl.col("Date").cast(pl.Date).name.to_lowercase(),
-            pl
-            .all()
+            pl.all()
             .exclude("Date")
             .name.replace(suffix, "", literal=True)
             .name.replace(prefix, "", literal=True)
             .name.to_lowercase(),
         )
 
-    def run_clean_up() -> None:
-        return (
-            pl
-            .scan_parquet(TICKER_RAW)
-            .select(rename_all(TICKER))
-            .sink_parquet(TICKER_CLEAN)
-        )
-
     # run_clean_up()
 
     px.line(
-        pl.read_parquet(TICKER_CLEAN),
+        pl.read_parquet(SPY.clean),
         x="date",
         y="close",
         log_y=True,
@@ -232,6 +261,14 @@ def _():
     Good news, we are done with the **hardest** part now!
 
     So, let's start computing that volatility targeting strategy.
+
+
+    Each asset has a mean return and standard deviation of returns, which is also commonly called volatility.
+
+    If our asset has a std of 15% and a mean return of 10%, the implication is the following:
+
+    *in a given year, I can expect that my portfolio performance will end up somewhere between -5% and + 25%*.
+
 
     ## The maths
 
@@ -254,7 +291,7 @@ def _():
     mo.md(r"""
     ## The Core Idea
 
-    - We want to define our  $\sigma_{\text{target}}$ as a constant annualized volatility of 15%. In other words: *I expect to gain or lose 15% in average in a given year*.
+    - We want to define our  $\sigma_{\text{target}}$ as a constant annualized volatility of 15%.
     - The volatility forecast $\hat{\sigma}_t$ will be computed on the last 20 days (1 month). This is a common choice.
     - On a given day, sometimes SPY will be higher, or lower. We wan't to act once per day.
     - This means we'll have to buy or sell shares daily to ensure that $w_c$ is as close as possible to $w_t$
@@ -320,38 +357,22 @@ def _():
 
 
 @app.cell
-def _(TICKER_CLEAN, pl):
-    TARGET = 0.15
-
-    def compute_vol_target_from_close(lf: pl.LazyFrame) -> pl.LazyFrame:
-        return (
-            lf
-            .with_columns(pl.col("close").log().diff().alias("log_return"))
-            .with_columns(
-                pl
-                .col("log_return")
-                .rolling_std(window_size=20, min_samples=20)
-                .shift(1)
-                .mul(16)
-                .alias("volatility")
-            )
-            .with_columns(
-                pl
-                .lit(TARGET)
-                .truediv(pl.col("volatility"))
-                .alias("vol_target")
-            )
-            .drop_nulls()
+def _(SPY, pl):
+    def vol_target_from_close(
+        lf: pl.LazyFrame, target: float = 0.15
+    ) -> pl.LazyFrame:
+        log_return = pl.col("close").log().diff().alias("log_return")
+        std = (
+            log_return.rolling_std(window_size=20, min_samples=20)
+            .mul(16)
+            .alias("std")
         )
+        vol_target = pl.lit(target).truediv(std).alias("vol_target")
+        return lf.with_columns(log_return, std, vol_target)
 
-    df = (
-        pl
-        .scan_parquet(TICKER_CLEAN)
-        .pipe(compute_vol_target_from_close)
-        .collect()
-    )
-    df.head(5)
-    return (df,)
+    df = pl.scan_parquet(SPY.clean).pipe(vol_target_from_close).collect()
+    df.head(30)
+    return df, vol_target_from_close
 
 
 @app.cell
@@ -359,9 +380,166 @@ def _(df, px):
     px.line(
         df,
         x="date",
-        y=["volatility", "vol_target"],
+        y=["std", "vol_target"],
         template="plotly_dark",
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # Compute our new returns
+
+    We can now use our `vol_target` to compute our final results.
+
+    For the daily returns, it's as simple as multiplying the `vol_target` of yesterday, $d-1$, by the `pct_return` of today $d$, for each day $d$.
+
+    The cool property of log returns is that they are **additive**: To compute our equity curve, a simple cumulative sum is enough, and it let us directly compare the two strategies.
+    """)
+    return
+
+
+@app.cell
+def _(SPY, pl, vol_target_from_close):
+    def vol_target_returns(lf: pl.LazyFrame) -> pl.LazyFrame:
+        vol_target_returns = (
+            pl.col("log_return")
+            .exp()
+            .sub(1)  # Reconvert log return to pct return
+            .mul(pl.col("vol_target").shift(1))
+            .log1p()  # Re-reconvert pct return to log return
+            .alias("vol_target_returns")
+        )
+        # Drop the nulls, to make both equity curves start at the same point
+        return lf.with_columns(vol_target_returns).drop_nulls()
+
+    (
+        pl.scan_parquet(SPY.clean)
+        .pipe(vol_target_from_close)
+        .pipe(vol_target_returns)
+        .head(5)
+        .collect()
+    )
+    return (vol_target_returns,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # Analyzing the results
+
+    So, now that we have computed our strategy returns, we can analyze the results.
+
+    From this point, it's very easy to compute any statistics we want, and visualize them, to compare against our benchmark.
+
+    If it's not better than the benchmark, why bother implementing it?
+
+
+    ## Questions to ask yourself
+
+    - How does the equity curves compare?
+    - How does the relative performance compare, i.e on a given day, was it better to be in the benchmark or in the strategy?
+    - Are the extreme returns more on the upside or downside (skewness)?
+    - How much are those extreme returns influencing the strategy (kurtosis)?
+    """)
+    return
+
+
+@app.cell
+def _(SPY, pl, vol_target_from_close, vol_target_returns):
+    STATS_COLS = [
+        "bench_equity",
+        "strat_equity",
+        "bench_drawdown",
+        "strat_drawdown",
+        "relative_equity",
+        "relative_returns",
+        "rolling_relative_perf",
+        "bench_perf_ratio",
+        "strat_perf_ratio",
+        "bench_skew",
+        "strat_skew",
+        "bench_kurtosis",
+        "strat_kurtosis",
+    ]
+
+    def get_stats(lf: pl.LazyFrame, window: int = 252) -> pl.LazyFrame:
+        strat_returns = pl.col("vol_target_returns")
+        log_return = pl.col("log_return")
+        relative_returns = strat_returns.sub(log_return)
+        strat_equity = strat_returns.cum_sum()
+        bench_equity = log_return.cum_sum()
+
+        return lf.with_columns(
+            strat_equity.alias("strat_equity"),
+            bench_equity.alias("bench_equity"),
+            relative_returns.alias("relative_returns"),
+            relative_returns.cum_sum().alias("relative_equity"),
+            relative_returns.rolling_sum(window_size=window).alias(
+                "rolling_relative_perf"
+            ),
+            bench_equity.pipe(_log_equity_dd).alias("bench_drawdown"),
+            strat_equity.pipe(_log_equity_dd).alias("strat_drawdown"),
+            strat_returns.pipe(_risk_adjusted_returns, window=window).alias(
+                "strat_perf_ratio"
+            ),
+            log_return.pipe(_risk_adjusted_returns, window=window).alias(
+                "bench_perf_ratio"
+            ),
+            log_return.rolling_skew(window_size=window).alias("bench_skew"),
+            strat_returns.rolling_skew(window_size=window).alias("strat_skew"),
+            log_return.rolling_kurtosis(window_size=window).alias(
+                "bench_kurtosis"
+            ),
+            strat_returns.rolling_kurtosis(window_size=window).alias(
+                "strat_kurtosis"
+            ),
+        )
+
+    def _log_equity_dd(expr: pl.Expr):
+        return expr.sub(expr.cum_max()).exp().sub(1)
+
+    def _risk_adjusted_returns(expr: pl.Expr, window: int) -> pl.Expr:
+        return expr.rolling_sum(window_size=window).truediv(
+            expr.rolling_std(window_size=window).mul(16)
+        )
+
+    df2 = (
+        pl.scan_parquet(SPY.clean)
+        .pipe(vol_target_from_close)
+        .pipe(vol_target_returns)
+        .pipe(get_stats)
+        .select(
+            "date",
+            *STATS_COLS,
+            pl.col("vol_target_returns").alias("strat_returns"),
+            pl.col("log_return").alias("bench_returns"),
+        )
+        .collect()
+    )
+    return STATS_COLS, df2
+
+
+@app.cell
+def _(STATS_COLS, df2, px):
+    px.line(df2, x="date", y=STATS_COLS, template="plotly_dark")
+    return
+
+
+@app.cell
+def _(df2, px):
+    px.histogram(
+        df2.select("strat_returns", "bench_returns"), template="plotly_dark"
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+
+    """)
     return
 
 
