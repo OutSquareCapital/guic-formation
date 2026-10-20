@@ -1,6 +1,40 @@
 # Guic Formation
 
-## Setup
+The following instructions will help you setup the project on your local machine.
+
+The **simple setup** is the easiest way if you are already familiar with git and python, and assume `UV` is already installed on your machine.
+
+The **manual setup** is more verbose, but more suited for beginners.
+
+## Simple setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/OutSquareCapital/guic-formation.git
+```
+
+Go into the newly created folder:
+
+```bash
+cd guic-formation
+```
+
+Then setup python:
+
+```bash
+uv sync
+```
+
+Then launch a new notebook in your browser, it may take a few seconds the first time:
+
+```bash
+uv run marimo edit formation.py
+```
+
+## Manual setup
+
+Note that unlike the simple setup, this will create a **new** project folder, so you may want to copy-paste the contents of this repository into it.
 
 ### 1. Initialize your project
 
