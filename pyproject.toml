@@ -1,0 +1,15 @@
+[project]
+name = "guic-formation"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "basedpyright>=1.40.2",
+    "marimo>=0.25.2",
+    "plotly-stubs>=0.1.4",
+    "plotly[express]>=7.1.0",
+    "polars>=2.0.0",
+    "pyochain>=0.28.0",
+    "yfinance>=1.7.0",
+]
