@@ -10,19 +10,7 @@ with app.setup:
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    # Formation contents
-
-    - Quantitative analysis
-    - Technical analysis
-    - Financial products characteristics
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _():
-    mo.md(r"""
-    ##Quantitative analysis
+    # Quantitative analysis
 
     According to [investopedia](https://www.investopedia.com/articles/investing/041114/simple-overview-quantitative-analysis.asp), *Quantitative analysis uses mathematical models to analyze financial data and develop algorithm-based trading strategies.*
 
