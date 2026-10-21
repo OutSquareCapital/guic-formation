@@ -10,6 +10,7 @@ dependencies = [
     "plotly-stubs>=0.1.4",
     "plotly[express]>=7.1.0",
     "polars>=2.0.0",
+    "pyarrow>=26.0.0",
     "pyochain>=0.28.0",
     "ruff>=0.17.1",
     "yfinance>=1.7.0",
