@@ -1,5 +1,13 @@
 # Guic Formation
 
+The notebook can be consulted at:
+
+https://molab.marimo.io/artifacts/art_HDEYgr6zYUJu8yoY1hh5rU
+
+Note that this is static. If you want to try to modify things, you can install the project on your local machine and run it with `marimo` (see below).
+
+## Installation
+
 The following instructions will help you setup the project on your local machine.
 
 The **simple setup** is easier and the **recommended** way, but may be more obscure if you are not already familiar with git and python.
