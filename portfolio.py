@@ -3,7 +3,7 @@ import marimo
 __generated_with = "0.25.2"
 app = marimo.App(width="full")
 
-with app.setup:
+with app.setup(hide_code=True):
     import marimo as mo
     import yfinance as yf
     import polars as pl
@@ -15,7 +15,7 @@ with app.setup:
     import plotly.express as px
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(PyoIterable, ticker):
     DB_PATH = Path("data")
     PARQUET = ".parquet"
@@ -150,7 +150,7 @@ def _(TICKERS, download_raw):
 
 
 @app.cell
-def _(CLEAN_DATA, Cols):
+def _():
     VOL_LOOKBACKS = Seq(5, 10, 15, 20)
     TREND_LOOKBACKS = (
         Seq(4, 8, 16, 32, 64, 128, 256)
@@ -160,8 +160,14 @@ def _(CLEAN_DATA, Cols):
         .collect(Seq)
     )
     VOL_TRESHOLD = 0.8
+    return TREND_LOOKBACKS, VOL_LOOKBACKS, VOL_TRESHOLD
 
-    def active_strats(lf: pl.LazyFrame) -> pl.LazyFrame:
+
+@app.cell
+def _(CLEAN_DATA, Cols, TREND_LOOKBACKS, VOL_LOOKBACKS, VOL_TRESHOLD):
+    def active_strats(
+        lf: pl.LazyFrame, short_vol: bool = False
+    ) -> pl.LazyFrame:
         spy_weigth = pl.col("SPY").mul(0.6)
         bench = pl.col("benchmark")
         strat = pl.col("strat")
@@ -184,7 +190,7 @@ def _(CLEAN_DATA, Cols):
             )
             .lazy()
             .with_columns(
-                _vol_signal("SPY").alias("long_vol_strat"),
+                _vol_signal("SPY", short_vol).alias("long_vol_strat"),
                 pl.col("DBC")
                 .shift(-1)
                 .mul(_trend_signal("DBC"))
@@ -236,7 +242,7 @@ def _(CLEAN_DATA, Cols):
     def _adjusted_perf(expr: pl.Expr, lookback: int = 252) -> pl.Expr:
         return expr.rolling_sum(lookback).truediv(expr.rolling_std(lookback))
 
-    def _vol_signal(ticker: str, short_vol: bool = True) -> pl.Expr:
+    def _vol_signal(ticker: str, short_vol: bool) -> pl.Expr:
         def _vol_ranked(n: int) -> pl.Expr:
             vol_expr = (
                 pl.col(ticker)
@@ -286,19 +292,23 @@ def _(CLEAN_DATA, Cols):
         )
 
     print(TREND_LOOKBACKS)
-    df = pl.scan_parquet(CLEAN_DATA).pipe(active_strats).collect()
+    df = pl.scan_parquet(CLEAN_DATA).pipe(active_strats, True).collect()
+    return (df,)
 
+
+@app.cell(hide_code=True)
+def _(df):
     def _log_ret_to_pct(expr: pl.Expr) -> pl.Expr:
-        return expr.sum().exp().sub(1).mul(100)
+        return expr.sum().exp().sub(1).mul(100).round(2)
 
     df.select(
         pl.col("strat").pipe(_log_ret_to_pct).alias("strat_return_%"),
         pl.col("benchmark").pipe(_log_ret_to_pct).alias("benchmark_return_%"),
     )
-    return (df,)
+    return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(Cols, df):
     px.line(
         df,
@@ -313,7 +323,7 @@ def _(Cols, df):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(Cols, df):
     px.line(
         df,
@@ -324,7 +334,7 @@ def _(Cols, df):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(Cols, df):
     px.line(
         df,

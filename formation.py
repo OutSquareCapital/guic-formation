@@ -526,7 +526,7 @@ def _(df2, px):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-
+ 
     """)
     return
 

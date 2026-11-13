@@ -1,0 +1,283 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.25.2",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "setup",
+      "code_hash": "1d0db38904205bec4d6f6f6a1f6cec3e",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hbol",
+      "code_hash": "cd2f1f56cf1dfd2859a17652f2cf5a17",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"quantitative-analysis\">Quantitative analysis</h1>\n<span class=\"paragraph\">According to <a href=\"https://www.investopedia.com/articles/investing/041114/simple-overview-quantitative-analysis.asp\" rel=\"noopener noreferrer\" target=\"_blank\">investopedia</a>, <em>Quantitative analysis uses mathematical models to analyze financial data and develop algorithm-based trading strategies.</em></span>\n<span class=\"paragraph\">Correct, but overly specific.</span>\n<h2 id=\"its-a-tool-to-help-you-get-answers-to-your-questions\">It's a tool to help you get answers to your questions</h2>\n<ul>\n<li>Should I buy AAPL stock?</li>\n<li>Should I hedge my US dollar exposure?</li>\n<li>Should I add a short-term mean-reversion strategy overlay to my long-term trend-following strategy?</li>\n<li>What is the correlation between my portfolio and the S&amp;P 500 index?</li>\n<li>etc...</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "36db22beac3dc287336fcd35f12e0a9d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"example-situation\">Example situation</h1>\n<span class=\"paragraph\">You have a portfolio with 100% in <code>SPY</code> (S&amp;P500 ETF).</span>\n<span class=\"paragraph\">You heard yesterday about volatility targeting in your favorite financial podcast, and you want to know if it is a good idea to implement it for you.</span>\n<span class=\"paragraph\">If seasoned professionnals use it, it surely has merits, right?</span>\n<h2 id=\"volatility-targeting-definition\">Volatility targeting definition</h2>\n<span class=\"paragraph\">According to <a href=\"https://quantpedia.com/an-introduction-to-volatility-targeting/\" rel=\"noopener noreferrer\" target=\"_blank\">Quantpedia</a>:</span>\n<span class=\"paragraph\"><em>\"The main aim of the volatility targeting technique is to manage the portfolio\u2019s exposure in such a way that the volatility of a portfolio is as close to the target value as possible.</em></span>\n<span class=\"paragraph\"><em>In other words, to ensure that the amount of dollar risk remains the same.\"</em></span>\n<span class=\"paragraph\">But words are still just words, you want to see by yourself the impact of this technique!</span>\n<span class=\"paragraph\"><strong>How can you do that?</strong></span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "35011aac81e190ec8580c74d3922c461",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"know-your-tools\">Know your tools</h1>\n<span class=\"paragraph\">Enter Python.</span>\n<span class=\"paragraph\">With it, you can <strong>very</strong> easily obtain the necessary data, perform the necessary calculations, and visualize the results.</span>\n<h2 id=\"why-not-use-excel\">Why not use Excel?</h2>\n<span class=\"paragraph\">Excel is a great tool, but it has some limitations when it comes to quantitative analysis:</span>\n<ul>\n<li>It is not designed for large datasets. The hard limit is around 1 millions rows per sheet. You can process <strong>hundreds of millions of rows</strong> with python in a matter of seconds.</li>\n<li>It can do only a <em>subset</em> of what Python can do</li>\n<li>Once it becomes more complex than a few formulas, it becomes hard to maintain</li>\n<li>LLMs can interact way more easily with code than with Excel sheets</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "7ef6e625fd961973cf02cfd66ea4d6f7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"define-the-problem\">Define the problem</h1>\n<span class=\"paragraph\">So, you want to get the data for your portfolio, which is 100% in <code>SPY</code>, compute the volatility targeting strategy, and visualize/analyze the results.</span>\n<span class=\"paragraph\">First, we want to:</span>\n<ul>\n<li>download the data</li>\n<li>save it</li>\n<li>maybe clean it to our wanted format</li>\n<li>save it again to a definitive file</li>\n<li>check that everything is good.</li>\n</ul>\n<span class=\"paragraph\">We'll use the <code>parquet</code> file format. Think of it as a <strong>much</strong> better <code>CSV</code> file.</span>\n<span class=\"paragraph\">It can be done in a few lines of code.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "7989463b0ab931504347624ad189032a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"we-need-a-ticker\">We need a ticker</h1>\n<span class=\"paragraph\">To use it's name, and link it to concrete files on disk.</span>\n<span class=\"paragraph\">We'll use <code>pathlib.Path</code> to represent file paths, e.g <code>users/my_folder/my_file.txt</code></span>\n<span class=\"paragraph\">We first define a structure, a class, to hold those informations together</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "2b00f0c6a158b56eb1bb7592ec02e4c8",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "ac8ff9fcd428c5d2d35bf6ec4e8f23fb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"getting-the-data\">Getting the data</h1>\n<span class=\"paragraph\">Now that we have your ticker, we define the downloading steps in themselves.</span>\n<ul>\n<li><code>yfinance</code> will let us download the data from Yahoo Finance</li>\n<li><code>polars</code> will let us manipulate said data, save/read it, and do all the computations we need.</li>\n<li><code>plotly</code> will help us visualize the results.</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "44f3847de947cad6892a7993f397a3f0",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "7599786f95b65f740e6cc751fabafa8a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"cleaning-up-data\">Cleaning up data</h1>\n<span class=\"paragraph\">Nice, we have our <code>SPY</code> prices! But as expected, the format isn't what we want:</span>\n<ul>\n<li>The column names are weird</li>\n<li>We don't need the hour/minute/second part of the date</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "274921233fc249797b30cdf6ccca571f",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "996feb914a3b79c8655f63cd43911ecf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">It works, great!</span>\n<span class=\"paragraph\">We see that there's a common structure for the name, and we know that we will probably download again from yfinance, hence always needing to clean immediately afterwards.</span>\n<span class=\"paragraph\">So, we extract this logic in a reusable function, and save our cleaned-up data in a new file.</span>\n<span class=\"paragraph\">Finally, we plot our full data to visualize it (that's what we want, right?) and re-check that everything is good.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "7b27b316b258fb37d49052be025423a4",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "45b37e50f118ea0203403bf99aef5351",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"getting-into-it\">Getting into it</h1>\n<span class=\"paragraph\">Good news, we are done with the <strong>hardest</strong> part now!</span>\n<span class=\"paragraph\">So, let's start computing that volatility targeting strategy.</span>\n<span class=\"paragraph\">Each asset has a mean return and standard deviation of returns, which is also commonly called volatility.</span>\n<span class=\"paragraph\">If our asset has a std of 15% and a mean return of 10%, the implication is the following:</span>\n<span class=\"paragraph\"><em>in a given year, I can expect that my portfolio performance will end up somewhere between -5% and + 25%</em>.</span>\n<h2 id=\"the-maths\">The maths</h2>\n<span class=\"paragraph\">RiskHub defines volatility targeting with the following formula:</span>\n<marimo-tex class=\"arithmatex\">||[w_t = \\frac{\\sigma_{\\text{target}}}{\\hat{\\sigma}_t}||]</marimo-tex><span class=\"paragraph\">Where:</span>\n<ul>\n<li><marimo-tex class=\"arithmatex\">||(w_t||)</marimo-tex> is the position weigth, our adjustment factor</li>\n<li><marimo-tex class=\"arithmatex\">||(\\sigma_{\\text{target}}||)</marimo-tex> is our target volatility.</li>\n<li><marimo-tex class=\"arithmatex\">||(\\hat{\\sigma}_t||)</marimo-tex>  is the current forecast of the asset's volatility.</li>\n</ul>\n<span class=\"paragraph\">We also define <marimo-tex class=\"arithmatex\">||(w_c||)</marimo-tex> as the current position weight, which is the <strong>current</strong>, actual exposure of our portfolio to SPY.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "9f8909cb918876a4e5fc885a63d60232",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"the-core-idea\">The Core Idea</h2>\n<ul>\n<li>We want to define our  <marimo-tex class=\"arithmatex\">||(\\sigma_{\\text{target}}||)</marimo-tex> as a constant annualized volatility of 15%.</li>\n<li>The volatility forecast <marimo-tex class=\"arithmatex\">||(\\hat{\\sigma}_t||)</marimo-tex> will be computed on the last 20 days (1 month). This is a common choice.</li>\n<li>On a given day, sometimes SPY will be higher, or lower. We wan't to act once per day.</li>\n<li>This means we'll have to buy or sell shares daily to ensure that <marimo-tex class=\"arithmatex\">||(w_c||)</marimo-tex> is as close as possible to <marimo-tex class=\"arithmatex\">||(w_t||)</marimo-tex></li>\n</ul>\n<span class=\"paragraph\">Basically, we want to ensure that the following equality is true as much as possible :</span>\n<marimo-tex class=\"arithmatex\">||[w_t = w_c||]</marimo-tex></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "6b678e83dec091aa17972d9327d6f3a6",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"example\">Example</h2>\n<span class=\"paragraph\">If we go from an exposure of <marimo-tex class=\"arithmatex\">||(1||)</marimo-tex>, i.e \"I have 100 dollars in my portfolio, and they are all in SPY right now\", then if <code>SPY</code> vol is at:</span>\n<ul>\n<li><strong>5%</strong> =&gt; We want to buy 200 dollars more to amplify our exposure and reach our target of <marimo-tex class=\"arithmatex\">||(3||)</marimo-tex>.</li>\n<li><strong>15%</strong> =&gt; We do nothing, since <marimo-tex class=\"arithmatex\">||(current = target||)</marimo-tex></li>\n<li><strong>30%</strong> =&gt; We want to sell half of our shares to reduce our exposure and reach our target of <marimo-tex class=\"arithmatex\">||(0.5||)</marimo-tex>.</li>\n</ul>\n<span class=\"paragraph\">Note that this imply access to cheap leverage, which is easy to do with SPY (that's not always the case!)</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "1692b96343fb2ed4639d1a066bf880d1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"forecasting-the-volatility\">Forecasting the volatility</h2>\n<span class=\"paragraph\">To estimate the volatility, we can simply assume that if today vol is at x, then it's <em>reasonnable</em> to expect tomorrow to be more or less in the same ballpark.</span>\n<span class=\"paragraph\">As such, we'll use a 20-day rolling window sample standard deviation of the daily log returns.</span>\n<span class=\"paragraph\">The formula for the window stdev being:</span>\n<span class=\"paragraph\"><marimo-tex class=\"arithmatex\">||(s_t = \\sqrt{\\frac{1}{19}\\sum_{i=t-19}^{t}\\left(x_i-\\bar{x}_t\\right)^2}||)</marimo-tex></span>\n<span class=\"paragraph\">With the arithmetic mean <marimo-tex class=\"arithmatex\">||(\\bar{x}_t||)</marimo-tex> as :</span>\n<span class=\"paragraph\"><marimo-tex class=\"arithmatex\">||(\\bar{x}_t = \\frac{1}{20}\\sum_{i=t-19}^{t}x_i||)</marimo-tex></span>\n<span class=\"paragraph\">But first we need to compute our log returns <marimo-tex class=\"arithmatex\">||(r_t||)</marimo-tex> from our raw price data.</span>\n<span class=\"paragraph\">We can define</span>\n<span class=\"paragraph\"><marimo-tex class=\"arithmatex\">||(r_t = \\ln\\left(\\frac{P_t}{P_{t-1}}\\right)||)</marimo-tex></span>\n<span class=\"paragraph\">Which then let us continue with our next formula: ...</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "b212d3e4669b77e9a8e5e4888e1958cb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">... Or we could go to code where obscure maths signs are replaced by clear english words, shall we?</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "89369a2883c2ba847857827c7bf6827a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "e9a9cbb234f20b9cfe33d34ae6d5fb9b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "1a907d661f4692994f3ef74df794b916",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"compute-our-new-returns\">Compute our new returns</h1>\n<span class=\"paragraph\">We can now use our <code>vol_target</code> to compute our final results.</span>\n<span class=\"paragraph\">For the daily returns, it's as simple as multiplying the <code>vol_target</code> of yesterday, <marimo-tex class=\"arithmatex\">||(d-1||)</marimo-tex>, by the <code>pct_return</code> of today <marimo-tex class=\"arithmatex\">||(d||)</marimo-tex>, for each day <marimo-tex class=\"arithmatex\">||(d||)</marimo-tex>.</span>\n<span class=\"paragraph\">The cool property of log returns is that they are <strong>additive</strong>: To compute our equity curve, a simple cumulative sum is enough, and it let us directly compare the two strategies.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "f88029caa9bfb70c47fb6ec57d639a2a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "1fddb867bd696f70cfcaeec982e238c1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"analyzing-the-results\">Analyzing the results</h1>\n<span class=\"paragraph\">So, now that we have computed our strategy returns, we can analyze the results.</span>\n<span class=\"paragraph\">From this point, it's very easy to compute any statistics we want, and visualize them, to compare against our benchmark.</span>\n<span class=\"paragraph\">If it's not better than the benchmark, why bother implementing it?</span>\n<h2 id=\"questions-to-ask-yourself\">Questions to ask yourself</h2>\n<ul>\n<li>How does the equity curves compare?</li>\n<li>How does the relative performance compare, i.e on a given day, was it better to be in the benchmark or in the strategy?</li>\n<li>Are the extreme returns more on the upside or downside (skewness)?</li>\n<li>How much are those extreme returns influencing the strategy (kurtosis)?</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "0c3c6cb143dc1d163e85163ecf8002d3",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "9e3cbc54160ad86c650da8e4da866fd5",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "02c9489457519fd4a920adcd2b3f4ad9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "aLJB",
+      "code_hash": "e181efcf155eef21719f37511de1f32f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}
