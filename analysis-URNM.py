@@ -14,7 +14,7 @@ with app.setup:
     import plotly.express as px
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     PARQUET = ".parquet"
 
@@ -80,6 +80,11 @@ def _(SPY):
     def normalize(expr: pl.Expr):
         return pl.col("log_return").mul(expr.shift(1))
 
+    def risk_adjusted_returns(expr: pl.Expr, window: int) -> pl.Expr:
+        return expr.rolling_sum(window).truediv(
+            expr.rolling_std(window).mul(16)
+        )
+
     def signal(window: int) -> pl.Expr:
         return (
             pl.col("log_return")
@@ -88,6 +93,9 @@ def _(SPY):
             .cast(pl.Int8)
             .alias("roc")
         )
+
+    def log_equity_dd(expr: pl.Expr):
+        return expr.sub(expr.cum_max()).exp().sub(1)
 
     def mean_reversion(window: int, bound: int) -> pl.Expr:
         expr = pl.col("log_return").rolling_sum(window)
@@ -101,14 +109,14 @@ def _(SPY):
             .alias("mr")
         )
 
-    X = Seq(60, 120, 252)
+    X = Seq([32, 64, 128, 256])
     LENGTHS = (
         X.iter()
         .map(lambda window: signal(window).alias(f"signal_{window}"))
         .reduce(lambda col1, col2: col1.add(col2))
         .truediv(X.len())
     )
-    Y = Seq(2, 4, 8, 16)
+    Y = Seq([4, 8, 16, 32])
     LENGTHS_MR = (
         Y.iter()
         .map(
@@ -119,6 +127,7 @@ def _(SPY):
         .reduce(lambda col1, col2: col1.add(col2))
         .truediv(Y.len())
     )
+    COLS = Seq("benchmark", "strat", "strat_mr", "composite_equity")
     df10 = (
         pl.scan_parquet(SPY.clean)
         .with_columns(pl.col("close").log().diff().alias("log_return"))
@@ -130,18 +139,61 @@ def _(SPY):
             LENGTHS.alias("signal"),
             LENGTHS_MR.alias("signal_mr"),
         )
+        .with_columns(
+            pl.col("signal")
+            .add(pl.col("signal_mr"))
+            .truediv(2)
+            .alias("composite")
+        )
         .drop_nulls()
         .with_columns(
-            normalize(pl.col("signal")).cum_sum().alias("strat"),
-            normalize(pl.col("signal_mr")).cum_sum().alias("strat_mr"),
-            pl.col("log_return").cum_sum().alias("benchmark")
+            pl.col("signal").pipe(normalize).cum_sum().alias("strat"),
+            pl.col("signal_mr").pipe(normalize).cum_sum().alias("strat_mr"),
+            pl.col("composite")
+            .pipe(normalize)
+            .cum_sum()
+            .alias("composite_equity"),
+            pl.col("log_return").cum_sum().alias("benchmark"),
+        )
+        .with_columns(
+            COLS.iter().map(
+                lambda c: pl.col(c).pipe(log_equity_dd).alias(f"{c}_drawdown")
+            )
         )
         .collect()
     )
+    df10
+    return COLS, df10, log_equity_dd
+
+
+@app.cell
+def _(df10):
     px.line(
         df10,
         x="date",
-        y=["strat_mr", "strat", "benchmark"],
+        y=["strat_mr", "strat", "benchmark", "composite_equity"],
+        template="plotly_dark",
+    )
+    return
+
+
+@app.cell
+def _(df10):
+    px.line(
+        df10,
+        x="date",
+        y=["signal_mr", "signal", "composite"],
+        template="plotly_dark",
+    )
+    return
+
+
+@app.cell
+def _(COLS, df10):
+    px.line(
+        df10,
+        x="date",
+        y=COLS.iter().map(lambda c: f"{c}_drawdown").collect(list),
         template="plotly_dark",
     )
     return
@@ -170,7 +222,7 @@ def _():
 
 
 @app.cell
-def _(SPY, vol_target_from_close, vol_target_returns):
+def _(log_equity_dd):
     STATS_COLS = [
         "bench_equity",
         "strat_equity",
@@ -202,8 +254,8 @@ def _(SPY, vol_target_from_close, vol_target_returns):
             relative_returns.rolling_sum(window_size=window).alias(
                 "rolling_relative_perf"
             ),
-            bench_equity.pipe(_log_equity_dd).alias("bench_drawdown"),
-            strat_equity.pipe(_log_equity_dd).alias("strat_drawdown"),
+            bench_equity.pipe(log_equity_dd).alias("bench_drawdown"),
+            strat_equity.pipe(log_equity_dd).alias("strat_drawdown"),
             strat_returns.pipe(_risk_adjusted_returns, window=window).alias(
                 "strat_perf_ratio"
             ),
@@ -220,41 +272,6 @@ def _(SPY, vol_target_from_close, vol_target_returns):
             ),
         )
 
-    def _log_equity_dd(expr: pl.Expr):
-        return expr.sub(expr.cum_max()).exp().sub(1)
-
-    def _risk_adjusted_returns(expr: pl.Expr, window: int) -> pl.Expr:
-        return expr.rolling_sum(window_size=window).truediv(
-            expr.rolling_std(window_size=window).mul(16)
-        )
-
-    df2 = (
-        pl.scan_parquet(SPY.clean)
-        .pipe(vol_target_from_close)
-        .pipe(vol_target_returns)
-        .pipe(get_stats)
-        .select(
-            "date",
-            *STATS_COLS,
-            pl.col("vol_target_returns").alias("strat_returns"),
-            pl.col("log_return").alias("bench_returns"),
-        )
-        .collect()
-    )
-    return STATS_COLS, df2
-
-
-@app.cell
-def _(STATS_COLS, df2):
-    px.line(df2, x="date", y=STATS_COLS, template="plotly_dark")
-    return
-
-
-@app.cell
-def _(df2):
-    px.histogram(
-        df2.select("strat_returns", "bench_returns"), template="plotly_dark"
-    )
     return
 
 
@@ -263,12 +280,6 @@ def _():
     mo.md(r"""
 
     """)
-    return
-
-
-@app.cell
-def _():
-    df = pl.read_parquet("URNM_raw.parquet")
     return
 
 
